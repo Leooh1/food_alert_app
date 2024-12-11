@@ -20,7 +20,7 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  String name = "심우재파산";
+  String name = "오채승파산";
 
   @override
   Widget build(BuildContext context) {
