@@ -61,6 +61,12 @@ class _HomeState extends State<Home> {
                   width: 100,
                 )
               ],
+            ),
+            Row(
+              children: [
+                Column(),
+                Column(),
+              ],
             )
           ],
         ),
