@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import "dart:convert";
 
+import 'package:intl/intl.dart';
+
 void main() {
   runApp(const MainApp());
 }
@@ -32,19 +34,23 @@ class _HomeState extends State<Home> {
   }
 
   void fetchGupsick() async {
+    DateTime now = DateTime.now();
+
     String gupsickUrl = "https://open.neis.go.kr/hub/mealServiceDietInfo";
 
     String apiKey = "ce7a974d58d14584ab0d35adcf0fe682";
-
+    String fromymd = DateFormat('yyyyMMdd').format(now);
+    String toymd =
+        DateFormat('yyyyMMdd').format(now.add(const Duration(days: 7)));
     var url = Uri.parse(gupsickUrl);
     var finalUrl = url.replace(queryParameters: {
       "KEY": apiKey,
       "Type": "json",
       "SD_SCHUL_CODE": "7130155",
       "ATPT_OFCDC_SC_CODE": "B10",
-      "MLSV_YMD": "20241211"
+      "MLSV_FROM_YMD": fromymd,
+      "MLSV_TO_YMD": toymd
     });
-    print(finalUrl.toString());
     var res = await http.get(finalUrl);
     setState(() {
       gupsickData = jsonDecode(res.body); // JsonDecoder 대신 jsonDecode 사용
@@ -67,21 +73,16 @@ class _HomeState extends State<Home> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        jsonEncode(gupsickData),
+                        "오늘의 급식",
                         textAlign: TextAlign.left,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       Text(
-                        '오Te파산',
+                        "${gupsickData["mealServiceDietInfo"][1]["row"][0]["DDISH_NM"].replaceAll("<br/>", ", ")}",
                         textAlign: TextAlign.left,
-                      ),
-                      Text(
-                        '오Te파산',
-                        textAlign: TextAlign.left,
-                      ),
-                      Text(
-                        '오Te파산',
-                        textAlign: TextAlign.left,
-                      ),
+                      )
                     ],
                   ),
                 ),
@@ -91,11 +92,12 @@ class _HomeState extends State<Home> {
                 )
               ],
             ),
-            Row(
-              children: [
-                Column(),
-                Column(),
-              ],
+            Column(
+              children:
+                  gupsickData["mealServiceDietInfo"][1]["row"].map<Widget>((a) {
+                return Text(
+                    "${a["MLSV_YMD"]} : ${a["DDISH_NM"].replaceAll("<br/>", ", ")}");
+              }).toList(),
             )
           ],
         ),
