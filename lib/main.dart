@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:food_alert_app/ask_school.dart';
 import 'package:http/http.dart' as http;
 import "dart:convert";
-
 import 'package:intl/intl.dart';
 
 void main() {
@@ -25,8 +25,8 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   String name = "오채승파산";
-  String gupsickUrl = "https://open.neis.go.kr/hub/mealServiceDietInfo";
   Map gupsickData = {'ㅇ': "초기화안됨"};
+
   @override
   void initState() {
     super.initState();
@@ -34,34 +34,44 @@ class _HomeState extends State<Home> {
   }
 
   void fetchGupsick() async {
+    String gupsickUrl = "http://61.254.83.178:9700";
     DateTime now = DateTime.now();
-
-    String gupsickUrl = "https://open.neis.go.kr/hub/mealServiceDietInfo";
-
-    String apiKey = "ce7a974d58d14584ab0d35adcf0fe682";
-    String fromymd = DateFormat('yyyyMMdd').format(now);
-    String toymd =
-        DateFormat('yyyyMMdd').format(now.add(const Duration(days: 7)));
+    String fromYmd = DateFormat("yyyyMMdd").format(now);
+    String toYmd =
+        DateFormat("yyyyMMdd").format(now.add(const Duration(days: 7)));
     var url = Uri.parse(gupsickUrl);
     var finalUrl = url.replace(queryParameters: {
-      "KEY": apiKey,
       "Type": "json",
       "SD_SCHUL_CODE": "7130155",
       "ATPT_OFCDC_SC_CODE": "B10",
-      "MLSV_FROM_YMD": fromymd,
-      "MLSV_TO_YMD": toymd
+      "MLSV_FROM_YMD": fromYmd,
+      "MLSV_TO_YMD": toYmd
     });
     var res = await http.get(finalUrl);
     setState(() {
-      gupsickData = jsonDecode(res.body); // JsonDecoder 대신 jsonDecode 사용
+      gupsickData = jsonDecode(utf8.decode(res.bodyBytes));
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    var mealInfo = gupsickData["mealServiceDietInfo"];
+    var row =
+        mealInfo != null && mealInfo.isNotEmpty ? mealInfo[1]["row"] : null;
+
     return Scaffold(
-      appBar: AppBar(),
-      body: Center(
+      appBar: AppBar(
+        actions: [
+          IconButton(
+              onPressed: () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => const AskSchool()));
+              },
+              icon: Icon(Icons.settings_rounded))
+        ],
+      ),
+      body: Padding(
+        padding: EdgeInsets.all(8),
         child: Column(
           children: [
             Row(
@@ -72,17 +82,13 @@ class _HomeState extends State<Home> {
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        "오늘의 급식",
-                        textAlign: TextAlign.left,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
+                      if (mealInfo != null &&
+                          mealInfo.isNotEmpty &&
+                          mealInfo[1]["row"] != null)
+                        Text(
+                          "${mealInfo[1]["row"][0]["DDISH_NM"].replaceAll("<br/>", ", ")}",
+                          textAlign: TextAlign.left,
                         ),
-                      ),
-                      Text(
-                        "${gupsickData["mealServiceDietInfo"][1]["row"][0]["DDISH_NM"].replaceAll("<br/>", ", ")}",
-                        textAlign: TextAlign.left,
-                      )
                     ],
                   ),
                 ),
@@ -92,13 +98,17 @@ class _HomeState extends State<Home> {
                 )
               ],
             ),
-            Column(
-              children:
-                  gupsickData["mealServiceDietInfo"][1]["row"].map<Widget>((a) {
-                return Text(
-                    "${a["MLSV_YMD"]} : ${a["DDISH_NM"].replaceAll("<br/>", ", ")}");
-              }).toList(),
-            )
+            if (mealInfo != null &&
+                mealInfo.isNotEmpty &&
+                mealInfo[1]["row"] != null)
+              Column(
+                children: mealInfo[1]["row"].map<Widget>((a) {
+                  return Text(
+                      "${a["MLSV_YMD"]} : ${a["DDISH_NM"].replaceAll("<br/>", ", ")}");
+                }).toList(),
+              ),
+            if (mealInfo == null || mealInfo.isEmpty)
+              const Text("급식 정보를 불러오는데 실패했습니다."),
           ],
         ),
       ),
