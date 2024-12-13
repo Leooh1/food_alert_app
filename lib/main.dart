@@ -38,7 +38,7 @@ class _HomeState extends State<Home> {
     DateTime now = DateTime.now();
     String fromYmd = DateFormat("yyyyMMdd").format(now);
     String toYmd =
-        DateFormat("yyyyMMdd").format(now.add(const Duration(days: 7)));
+        DateFormat("yyyyMMdd").format(now.add(const Duration(days: 90)));
     var url = Uri.parse(gupsickUrl);
     var finalUrl = url.replace(queryParameters: {
       "Type": "json",
@@ -59,8 +59,10 @@ class _HomeState extends State<Home> {
     var row =
         mealInfo != null && mealInfo.isNotEmpty ? mealInfo[1]["row"] : null;
 
+    var navBarColor = Color.fromRGBO(69, 165, 255, 1);
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: navBarColor,
         actions: [
           IconButton(
               onPressed: () {
@@ -70,42 +72,63 @@ class _HomeState extends State<Home> {
               icon: Icon(Icons.settings_rounded))
         ],
       ),
-      body: Padding(
-        padding: EdgeInsets.all(8),
+      body: Container(
+        color: Colors.white,
         child: Column(
           children: [
-            Row(
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (mealInfo != null &&
-                          mealInfo.isNotEmpty &&
-                          mealInfo[1]["row"] != null)
-                        Text(
-                          "${mealInfo[1]["row"][0]["DDISH_NM"].replaceAll("<br/>", ", ")}",
-                          textAlign: TextAlign.left,
-                        ),
-                    ],
+            Container(
+              color: navBarColor,
+              padding: EdgeInsets.only(top: 30, bottom: 30),
+              width: double.infinity,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Today:",
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                ),
-                Image.network(
-                  "https://ichef.bbci.co.uk/ace/standard/976/cpsprodpb/16620/production/_91408619_55df76d5-2245-41c1-8031-07a4da3f313f.jpg.webp",
-                  width: 100,
-                )
-              ],
+                  if (mealInfo != null &&
+                      mealInfo.isNotEmpty &&
+                      mealInfo[1]["row"] != null)
+                    Text(
+                      "${mealInfo[1]["row"][0]["DDISH_NM"].replaceAll("<br/>", ", ")}",
+                      textAlign: TextAlign.left,
+                    ),
+                ],
+              ),
             ),
             if (mealInfo != null &&
                 mealInfo.isNotEmpty &&
                 mealInfo[1]["row"] != null)
-              Column(
-                children: mealInfo[1]["row"].map<Widget>((a) {
-                  return Text(
-                      "${a["MLSV_YMD"]} : ${a["DDISH_NM"].replaceAll("<br/>", ", ")}");
-                }).toList(),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      children: mealInfo[1]["row"].sublist(1).map<Widget>((a) {
+                        return Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              color: Color.fromRGBO(0, 0, 0, 0.1)),
+                          margin: EdgeInsets.only(bottom: 8),
+                          padding: EdgeInsets.all(10),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "${a["MLSV_YMD"].substring(4, 6)}월 ${a["MLSV_YMD"].substring(6, 8)}일\n",
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              Text("${a["DDISH_NM"].replaceAll("<br/>", ", ")}")
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
               ),
             if (mealInfo == null || mealInfo.isEmpty)
               const Text("급식 정보를 불러오는데 실패했습니다."),
